@@ -1,23 +1,18 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Clock, Lock, QrCode, Shield, Share2, FileText, CheckCircle2, ArrowRight, Users, User, Stethoscope, UserCog, MapPin, Lungs, Blood, Activity, LayoutDashboard, FileSearch, ScanText, ShieldAlert } from 'lucide-react'
+import Link from 'next/link'
+import { Heart, FileText, Users, User, Stethoscope, MapPin, Activity, LayoutDashboard, FileSearch, ScanText, ShieldAlert } from 'lucide-react'
 import Image from 'next/image'
 import { 
   Brain,
-  UserPlus,
   Trophy,
   Star,
   Calendar
 } from 'lucide-react'
-import { signIn } from 'next-auth/react'
 import PatientForm from '@/components/PatientForm'
 
 export default function LandingPage() {
-  const [activeSection, setActiveSection] = useState('hero');
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -38,33 +33,24 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
-              <Link href="/login?role=user" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
-                <User className="h-5 w-5" />
-                Login as User
-              </Link>
-              <Link href="/login?role=doctor" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
-                <Stethoscope className="h-5 w-5" />
-                Login as Doctor
-              </Link>
-              <Link href="/login?role=admin" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
-                <UserCog className="h-5 w-5" />
-                Login as Admin
-              </Link>
-              <button 
-                onClick={() => signIn('google')}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-50 transition-all"
-              >
-                <Image 
-                  src="/google.svg" 
-                  alt="Google" 
-                  width={20} 
-                  height={20}
-                />
-                Sign in with Google
-              </button>
-              <Link href="/register" className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all">
-                Register
-              </Link>
+              <div className="flex flex-col items-center">
+                <Link href="/login?role=user" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
+                  <User className="h-5 w-5" />
+                  Login as User
+                </Link>
+                <div className="text-xs text-white/80 mt-1">
+                  Demo: user@demo.com / user123
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <Link href="/login?role=doctor" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
+                  <Stethoscope className="h-5 w-5" />
+                  Login as Doctor
+                </Link>
+                <div className="text-xs text-white/80 mt-1">
+                  Demo: doctor@demo.com / doctor123
+                </div>
+              </div>
             </motion.div>
           </nav>
 

@@ -16,13 +16,12 @@ interface FirebaseConfig {
 }
 
 const firebaseConfig: FirebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
+  apiKey: "AIzaSyBjsV9-eGpFhQPU7h_aSqJQFqJ7Jkt_Xfo",
+  authDomain: "medical-wallet-bb1b4.firebaseapp.com",
+  projectId: "medical-wallet-bb1b4",
+  storageBucket: "medical-wallet-bb1b4.appspot.com",
+  messagingSenderId: "1039460737782",
+  appId: "1:1039460737782:web:b4f85f11c707720c8d6e8a"
 };
 
 // Function to inject Firebase config into service worker
