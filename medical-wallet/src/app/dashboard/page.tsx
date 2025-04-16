@@ -1040,10 +1040,10 @@ export default function DashboardPage() {
                   
                   {/* Health Card Design */}
                   <div className="flex justify-center">
-                    <div id="health-card" className="bg-white border-2 border-blue-500 rounded-lg p-4 mb-4" style={{ width: '600px' }}>
+                    <div id="health-card" className="bg-white border-2 border-blue-500 rounded-lg p-6 mb-4" style={{ width: '600px', minHeight: '200px' }}>
                       <div className="flex items-start space-x-4">
                         {/* Left: Profile Photo */}
-                        <div className="w-24 h-24 flex-shrink-0">
+                        <div className="w-28 h-28 flex-shrink-0">
                           {formData.passportPhoto ? (
                             <img
                               src={formData.passportPhoto}
@@ -1052,38 +1052,38 @@ export default function DashboardPage() {
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                              <UserCircle className="w-12 h-12 text-gray-400" />
+                              <UserCircle className="w-14 h-14 text-gray-400" />
                             </div>
                           )}
                         </div>
 
                         {/* Middle: Patient Information */}
-                        <div className="flex-grow">
-                          <h2 className="text-xl font-bold text-gray-900 mb-2">{formData.fullName}</h2>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        <div className="flex-grow py-2">
+                          <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.fullName}</h2>
+                          <div className="space-y-2 text-sm">
                             <p className="text-gray-600">
-                              <span className="font-semibold">DOB:</span> {formData.age} years
+                              <span className="font-semibold">Name:</span> {formData.fullName}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Gender:</span> {formData.gender}
+                              <span className="font-semibold">Age:</span> {formData.age} years
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Blood:</span> {formData.bloodType}
+                              <span className="font-semibold">Phone:</span> {formData.phoneNumber}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Mobile:</span> {formData.phoneNumber}
-                            </p>
-                            <p className="text-gray-600 col-span-2">
                               <span className="font-semibold">Email:</span> {formData.email}
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Aadhar:</span> {formData.aadharNumber}
                             </p>
                           </div>
                         </div>
 
                         {/* Right: QR Code */}
-                        <div className="w-24 h-24 flex-shrink-0">
+                        <div className="w-28 h-28 flex-shrink-0">
                           <QRCode
                             value={qrData}
-                            size={96}
+                            size={112}
                             level="H"
                             className="w-full h-full"
                           />
