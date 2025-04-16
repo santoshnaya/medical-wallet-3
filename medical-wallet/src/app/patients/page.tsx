@@ -10,6 +10,7 @@ import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import PatientCard from '@/components/PatientCard';
 
 interface Patient {
   id: string;
@@ -147,6 +148,7 @@ export default function PatientsList() {
   });
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [savedPatient, setSavedPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
     loadPatients();
@@ -294,6 +296,10 @@ export default function PatientsList() {
       });
 
       toast.success('Patient added successfully!');
+      setSavedPatient({
+        id: docRef.id,
+        ...patientWithId
+      });
     } catch (error) {
       console.error('Error adding patient:', error);
       setError('Failed to add patient. Please try again.');
