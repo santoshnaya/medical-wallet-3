@@ -998,22 +998,13 @@ export default function DashboardPage() {
                       className="mb-4"
                     />
                   </div>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={downloadQRCode}
-                      className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <Download className="h-5 w-5" />
-                      Download QR Code
-                    </button>
-                    <button
-                      onClick={() => window.open(`data:image/svg+xml;base64,${btoa(document.getElementById('qr-code')?.outerHTML || '')}`, '_blank')}
-                      className="mt-4 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <Download className="h-5 w-5" />
-                      View QR Code
-                    </button>
-                  </div>
+                  <button
+                    onClick={downloadQRCode}
+                    className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Download className="h-5 w-5" />
+                    Download QR Code
+                  </button>
                 </div>
               </div>
             )}
