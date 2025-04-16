@@ -13,7 +13,87 @@ import {
 import { ref, uploadBytes, getDownloadURL, listAll, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 
-export const firebaseService = {
+// Define the Patient interface
+export interface Patient {
+  userId: string;
+  name: string;
+  age: string;
+  gender: string;
+  bloodType: string;
+  height?: string;
+  weight?: string;
+  allergies?: string;
+  medications?: string;
+  medicalHistory?: string;
+  emergencyContact?: {
+    name: string;
+    relationship: string;
+    phone: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+class FirebaseService {
+  // Save patient data to Firestore
+  async savePatient(patientId: string, patientData: Patient): Promise<void> {
+    try {
+      // Check if a patient with this ID already exists
+      const patientRef = doc(db, 'patients', patientId);
+      const patientDoc = await getDoc(patientRef);
+      
+      if (patientDoc.exists()) {
+        // Update existing patient
+        await setDoc(patientRef, {
+          ...patientData,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } else {
+        // Create new patient
+        await setDoc(patientRef, patientData);
+      }
+    } catch (error) {
+      console.error('Error saving patient data:', error);
+      throw error;
+    }
+  }
+  
+  // Get patient by ID
+  async getPatient(patientId: string): Promise<Patient | null> {
+    try {
+      const patientRef = doc(db, 'patients', patientId);
+      const patientDoc = await getDoc(patientRef);
+      
+      if (patientDoc.exists()) {
+        return patientDoc.data() as Patient;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting patient data:', error);
+      throw error;
+    }
+  }
+  
+  // Get patients by user ID
+  async getPatientsByUserId(userId: string): Promise<Patient[]> {
+    try {
+      const patientsRef = collection(db, 'patients');
+      const q = query(patientsRef, where('userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      const patients: Patient[] = [];
+      querySnapshot.forEach((doc) => {
+        patients.push(doc.data() as Patient);
+      });
+      
+      return patients;
+    } catch (error) {
+      console.error('Error getting patients by user ID:', error);
+      throw error;
+    }
+  }
+
   // Patient operations
   async getPatients() {
     try {
@@ -24,29 +104,7 @@ export const firebaseService = {
       console.error('Error getting patients:', error);
       throw error;
     }
-  },
-
-  async getPatient(patientId: string) {
-    try {
-      const docRef = doc(db, 'patients', patientId);
-      const docSnap = await getDoc(docRef);
-      return docSnap.exists() ? docSnap.data() : null;
-    } catch (error) {
-      console.error('Error getting patient:', error);
-      throw error;
-    }
-  },
-
-  async savePatient(patientId: string, data: any) {
-    try {
-      const docRef = doc(db, 'patients', patientId);
-      await setDoc(docRef, data, { merge: true });
-      return true;
-    } catch (error) {
-      console.error('Error saving patient:', error);
-      throw error;
-    }
-  },
+  }
 
   async updatePatient(patientId: string, updates: any) {
     try {
@@ -57,7 +115,7 @@ export const firebaseService = {
       console.error('Error updating patient:', error);
       throw error;
     }
-  },
+  }
 
   async deletePatient(patientId: string) {
     try {
@@ -68,7 +126,7 @@ export const firebaseService = {
       console.error('Error deleting patient:', error);
       throw error;
     }
-  },
+  }
 
   // Medication operations
   async getMedications(userId: string) {
@@ -84,7 +142,7 @@ export const firebaseService = {
       console.error('Error getting medications:', error);
       throw error;
     }
-  },
+  }
 
   async saveMedication(data: any) {
     try {
@@ -95,7 +153,7 @@ export const firebaseService = {
       console.error('Error saving medication:', error);
       throw error;
     }
-  },
+  }
 
   async updateMedication(medicationId: string, updates: any) {
     try {
@@ -106,7 +164,7 @@ export const firebaseService = {
       console.error('Error updating medication:', error);
       throw error;
     }
-  },
+  }
 
   async deleteMedication(medicationId: string) {
     try {
@@ -117,7 +175,7 @@ export const firebaseService = {
       console.error('Error deleting medication:', error);
       throw error;
     }
-  },
+  }
 
   // File operations
   async uploadFile(userId: string, file: File, path: string) {
@@ -130,7 +188,7 @@ export const firebaseService = {
       console.error('Error uploading file:', error);
       throw error;
     }
-  },
+  }
 
   async getFileUrl(path: string) {
     try {
@@ -140,7 +198,7 @@ export const firebaseService = {
       console.error('Error getting file URL:', error);
       throw error;
     }
-  },
+  }
 
   async listFiles(userId: string, path: string) {
     try {
@@ -151,7 +209,7 @@ export const firebaseService = {
       console.error('Error listing files:', error);
       throw error;
     }
-  },
+  }
 
   async deleteFile(path: string) {
     try {
@@ -163,4 +221,7 @@ export const firebaseService = {
       throw error;
     }
   }
-}; 
+}
+
+// Export a singleton instance
+export const firebaseService = new FirebaseService(); 

@@ -58,7 +58,7 @@ export default function DoctorDashboardPage() {
               <h2 className="text-2xl font-semibold text-gray-700">Welcome to the Doctor Dashboard</h2>
               <p className="mt-2 text-gray-500">You are signed in with Google as a doctor</p>
             </div>
-          </div>
+            </div>
         </div>
       </main>
     </div>

@@ -25,6 +25,20 @@ const firebaseConfig: FirebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 };
 
+// Function to inject Firebase config into service worker
+const injectFirebaseConfig = () => {
+  if (typeof window !== 'undefined') {
+    const script = document.createElement('script');
+    script.textContent = `
+      self.FIREBASE_CONFIG = ${JSON.stringify(firebaseConfig)};
+    `;
+    document.head.appendChild(script);
+  }
+};
+
+// Call the injection function
+injectFirebaseConfig();
+
 console.log('Firebase Config Loaded:', {
   apiKey: firebaseConfig.apiKey ? '***' : 'MISSING',
   authDomain: firebaseConfig.authDomain || 'MISSING',

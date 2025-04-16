@@ -13,6 +13,7 @@ import {
   Calendar
 } from 'lucide-react'
 import { signIn } from 'next-auth/react'
+import PatientForm from '@/components/PatientForm'
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('hero');
@@ -249,14 +250,31 @@ export default function LandingPage() {
                     transition={{ delay: index * 0.1 }}
                     className="flex items-center gap-3"
                   >
-                    <div className="bg-blue-100 p-2 rounded-full">
-                      <item.icon className="h-5 w-5 text-blue-600" />
-                    </div>
+                    <item.icon className="h-6 w-6 text-blue-600" />
                     <span className="text-black">{item.text}</span>
                   </motion.li>
                 ))}
               </ul>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Patient Form Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-black mb-4">Add Your Medical Information</h2>
+            <p className="text-black max-w-2xl mx-auto">
+              Fill in your medical details to get started with our comprehensive healthcare management system.
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <PatientForm 
+              redirectPath="/dashboard"
+              showTitle={false}
+              className="shadow-lg"
+            />
           </div>
         </div>
       </section>

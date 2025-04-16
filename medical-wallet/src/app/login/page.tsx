@@ -23,6 +23,25 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Demo credentials for testing
+  const demoCredentials = {
+    user: {
+      email: 'demo.user@example.com',
+      password: 'demo123',
+      role: 'user'
+    },
+    doctor: {
+      email: 'demo.doctor@example.com',
+      password: 'demo123',
+      role: 'doctor'
+    },
+    admin: {
+      email: 'demo.admin@example.com',
+      password: 'demo123',
+      role: 'admin'
+    }
+  }
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     
@@ -80,7 +99,7 @@ export default function LoginPage() {
             router.push('/doctor/dashboard')
             break
           case 'user':
-            router.push('/user/dashboard')
+            router.push('/user/fields')
             break
           default:
             toast.error('Invalid user role')
@@ -97,77 +116,182 @@ export default function LoginPage() {
   }
 
   const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    setError(null)
     try {
-      setIsLoading(true)
-      setError('')
-      
-      const result = await signIn('google', {
-        callbackUrl: role === 'admin' ? '/admin/dashboard' : 
-                     role === 'doctor' ? '/doctor/dashboard' : 
-                     '/dashboard',
-        redirect: true,
-      })
-      
+      // Determine callback URL based on role
+      let callbackUrl = '/dashboard' // Default for user
+      if (role === 'admin') {
+        callbackUrl = '/admin/dashboard'
+      } else if (role === 'doctor') {
+        // Add doctor dashboard path when available
+        callbackUrl = '/doctor/dashboard' // Placeholder
+      }
+
+      const result = await signIn('google', { callbackUrl: callbackUrl, redirect: false })
+
       if (result?.error) {
-        setError('Authentication failed. Please try again.')
+        setError('Failed to sign in with Google. Please try again.')
+        toast.error('Google Sign-in Failed: ' + result.error) // Show toast error
+      } else if (result?.url) {
+        router.push(result.url) // Redirect on success
+        toast.success('Signed in successfully!') // Show toast success
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.')
-      console.error(err)
+      setError('An unexpected error occurred during sign-in.')
+      toast.error('An unexpected error occurred.') // Show toast error
+      console.error('Sign-in error:', err)
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleDemoLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    if (formData.email === demoCredentials[role].email && formData.password === demoCredentials[role].password) {
+      // Simulate successful login for demo user
+      try {
+        // Store demo user info in sessionStorage for dashboard use
+        sessionStorage.setItem('isDemoUserLoggedIn', 'true')
+        sessionStorage.setItem('demoUserId', formData.email)
+        sessionStorage.setItem('demoUserName', 'Demo User') // Store a demo name
+
+        toast.success('Demo login successful!')
+        router.push('/dashboard') // Redirect to user dashboard
+      } catch (storageError) {
+        setError('Failed to initialize demo session. Please try again.')
+        toast.error('Demo login failed due to storage issue.')
+        console.error("SessionStorage error:", storageError)
+        setIsLoading(false)
+      }
+    } else {
+      setError('Invalid demo credentials.')
+      toast.error('Invalid demo credentials.')
+      setIsLoading(false)
+    }
+  }
+
+  // Redirect if trying to demo login for admin/doctor roles
+  useEffect(() => {
+    if (role !== 'user' && (formData.email || formData.password)) {
+      // Clear potential demo creds if role changes
+      setFormData({
+        email: '',
+        password: ''
+      })
+    }
+  }, [role, formData.email, formData.password])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full space-y-8 p-10 bg-white shadow-lg rounded-lg">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Sign in as {role.charAt(0).toUpperCase() + role.slice(1)}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
         </div>
-        
+
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
+        {role === 'user' ? (
+          // Demo Login Form for User Role
+          <form className="mt-8 space-y-6" onSubmit={handleDemoLogin}>
+            <input type="hidden" name="remember" defaultValue="true" />
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <label htmlFor="email-address" className="sr-only">Email address</label>
+                <input
+                  id="email-address"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Email address (use demo@example.com)"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
               </div>
+              <div>
+                <label htmlFor="password" className="sr-only">Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Password (use password)"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* Display Demo Credentials */}
+            <div className="text-xs text-center text-gray-500">
+              <p>Use demo credentials:</p>
+              <p>Email: <span className="font-medium">demo.user@example.com</span></p>
+              <p>Password: <span className="font-medium">demo123</span></p>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                {isLoading ? 'Signing in...' : 'Sign in with Demo Credentials'}
+              </button>
+            </div>
+            <div className="text-sm text-center">
+              <p className="text-gray-600">Or login as another role:</p>
+              <Link href="/login?role=doctor" className="font-medium text-indigo-600 hover:text-indigo-500 mr-2">
+                Doctor Login
+              </Link>
+              |
+              <Link href="/login?role=admin" className="font-medium text-indigo-600 hover:text-indigo-500 ml-2">
+                Admin Login
+              </Link>
+            </div>
+          </form>
+        ) : (
+          // Google Sign-in for Admin/Doctor Roles
+          <div className="mt-8">
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              <Image src="/google.svg" alt="Google" width={20} height={20} className="mr-2" />
+              {isLoading ? 'Signing in...' : 'Sign in with Google'}
+            </button>
+            <div className="text-sm text-center mt-4">
+              <p className="text-gray-600">Or login as another role:</p>
+              <Link href="/login?role=user" className="font-medium text-indigo-600 hover:text-indigo-500 mr-2">
+                User Login (Demo)
+              </Link>
+              |
+              <Link href={role === 'admin' ? "/login?role=doctor" : "/login?role=admin"} className="font-medium text-indigo-600 hover:text-indigo-500 ml-2">
+                {role === 'admin' ? "Doctor Login" : "Admin Login"}
+              </Link>
             </div>
           </div>
         )}
-        
-        <div className="mt-8 space-y-6">
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
-          >
-            <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-              <Image 
-                src="/google.svg" 
-                alt="Google" 
-                width={20} 
-                height={20}
-              />
-            </span>
-            {isLoading ? 'Signing in...' : 'Sign in with Google'}
-          </button>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Signing in as: <span className="font-medium">{role}</span>
-            </p>
-          </div>
+
+        <div className="text-sm text-center">
+          <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+            Don't have an account? Register
+          </Link>
         </div>
       </div>
     </div>
   )
-} 
+}

@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
               <p className="mt-2 text-gray-500">You are signed in with Google as an admin</p>
             </div>
           </div>
-        </div>
+          </div>
       </main>
     </div>
   );
