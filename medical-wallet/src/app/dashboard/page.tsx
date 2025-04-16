@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
   const [qrData, setQrData] = useState<string>('')
+  const [showHealthCard, setShowHealthCard] = useState(false)
   const [formData, setFormData] = useState<PatientForm>({
     fullName: '',
     age: '',
@@ -153,7 +154,7 @@ export default function DashboardPage() {
           [field]: value
         }
       }))
-    } else {
+          } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
@@ -299,6 +300,51 @@ export default function DashboardPage() {
     doc.save(`patient-record-${patientData.personalInfo.fullName}.pdf`)
   }
 
+  const downloadQRCode = () => {
+    const svg = document.getElementById('qr-code')
+    if (!svg) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const pngFile = canvas.toDataURL('image/png')
+      
+      const downloadLink = document.createElement('a')
+      downloadLink.download = `patient-qr-${formData.fullName}.png`
+      downloadLink.href = pngFile
+      downloadLink.click()
+    }
+    
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
+  }
+
+  const downloadHealthCard = async () => {
+    const card = document.getElementById('health-card')
+    if (!card) return
+
+    try {
+      const canvas = await html2canvas(card, {
+        scale: 2,
+        backgroundColor: 'white'
+      })
+      
+      const link = document.createElement('a')
+      link.download = `health-card-${formData.fullName}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+      toast.success('Health Card downloaded successfully!')
+    } catch (error) {
+      console.error('Error downloading health card:', error)
+      toast.error('Failed to download health card')
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -428,36 +474,14 @@ export default function DashboardPage() {
           phone: ''
         }
       })
+
+      setShowHealthCard(true)
     } catch (error) {
       console.error('Error saving patient data:', error)
       toast.error('Failed to save patient information. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const downloadQRCode = () => {
-    const svg = document.getElementById('qr-code')
-    if (!svg) return
-
-    const svgData = new XMLSerializer().serializeToString(svg)
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    const img = new Image()
-    
-    img.onload = () => {
-      canvas.width = img.width
-      canvas.height = img.height
-      ctx?.drawImage(img, 0, 0)
-      const pngFile = canvas.toDataURL('image/png')
-      
-      const downloadLink = document.createElement('a')
-      downloadLink.download = `patient-qr-${formData.fullName}.png`
-      downloadLink.href = pngFile
-      downloadLink.click()
-    }
-    
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
   }
 
   return (
@@ -1005,6 +1029,79 @@ export default function DashboardPage() {
                     <Download className="h-5 w-5" />
                     Download QR Code
                   </button>
+                </div>
+              </div>
+            )}
+
+            {showHealthCard && (
+              <div className="mt-8">
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Digital Health Card</h3>
+                  
+                  {/* Health Card Design */}
+                  <div className="flex justify-center">
+                    <div id="health-card" className="bg-white border-2 border-blue-500 rounded-lg p-4 mb-4" style={{ width: '600px' }}>
+                      <div className="flex items-start space-x-4">
+                        {/* Left: Profile Photo */}
+                        <div className="w-24 h-24 flex-shrink-0">
+                          {formData.passportPhoto ? (
+                            <img
+                              src={formData.passportPhoto}
+                              alt="Profile"
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+                              <UserCircle className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Middle: Patient Information */}
+                        <div className="flex-grow">
+                          <h2 className="text-xl font-bold text-gray-900 mb-2">{formData.fullName}</h2>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <p className="text-gray-600">
+                              <span className="font-semibold">DOB:</span> {formData.age} years
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Gender:</span> {formData.gender}
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Blood:</span> {formData.bloodType}
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Mobile:</span> {formData.phoneNumber}
+                            </p>
+                            <p className="text-gray-600 col-span-2">
+                              <span className="font-semibold">Email:</span> {formData.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Right: QR Code */}
+                        <div className="w-24 h-24 flex-shrink-0">
+                          <QRCode
+                            value={qrData}
+                            size={96}
+                            level="H"
+                            className="w-full h-full"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Download Card Button */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={downloadHealthCard}
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <Download className="h-5 w-5" />
+                      Download Health Card
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
