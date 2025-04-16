@@ -22,6 +22,16 @@ interface PatientForm {
   age: string
   gender: string
   bloodType: string
+  phoneNumber: string
+  email: string
+  aadharNumber: string
+  passportPhoto: string
+  address: {
+    street: string
+    city: string
+    state: string
+    pincode: string
+  }
   height: string
   weight: string
   bloodPressure: string
@@ -59,6 +69,16 @@ export default function DashboardPage() {
     age: '',
     gender: '',
     bloodType: '',
+    phoneNumber: '',
+    email: '',
+    aadharNumber: '',
+    passportPhoto: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      pincode: ''
+    },
     height: '',
     weight: '',
     bloodPressure: '',
@@ -122,6 +142,15 @@ export default function DashboardPage() {
           [field]: value
         }
       }))
+    } else if (name.startsWith('address_')) {
+      const field = name.replace('address_', '')
+      setFormData(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [field]: value
+        }
+      }))
     } else {
       setFormData(prev => ({
         ...prev,
@@ -181,30 +210,103 @@ export default function DashboardPage() {
     setIsSubmitting(true)
 
     try {
-      const patientsRef = collection(db, 'patients2')
-      const docRef = await addDoc(patientsRef, {
-        ...formData,
-        userEmail,
-        createdAt: new Date().toISOString()
-      })
+      // Structure the patient data
+      const patientData = {
+        // Personal Information
+        personalInfo: {
+          fullName: formData.fullName,
+          age: formData.age,
+          gender: formData.gender,
+          bloodType: formData.bloodType,
+          phoneNumber: formData.phoneNumber,
+          email: formData.email,
+          aadharNumber: formData.aadharNumber,
+          passportPhoto: formData.passportPhoto,
+          address: formData.address,
+          createdAt: new Date().toISOString()
+        },
+
+        // Vitals & Measurements
+        vitals: {
+          height: formData.height,
+          weight: formData.weight,
+          bloodPressure: formData.bloodPressure,
+          heartRate: formData.heartRate,
+          lastUpdated: new Date().toISOString()
+        },
+
+        // Medical History
+        medicalHistory: {
+          existingConditions: formData.existingConditions,
+          pastSurgeries: formData.pastSurgeries,
+          familyMedicalHistory: formData.familyMedicalHistory,
+          allergies: formData.allergies,
+          medications: formData.medications
+        },
+
+        // Visit Information
+        visitInfo: {
+          date: formData.visitInfo.date,
+          doctor: formData.visitInfo.doctor,
+          reason: formData.visitInfo.reason,
+          diagnosis: formData.visitInfo.diagnosis,
+          prescribedTreatment: formData.visitInfo.prescribedTreatment
+        },
+
+        // Emergency Contact
+        emergencyContact: {
+          name: formData.emergencyContact.name,
+          relationship: formData.emergencyContact.relationship,
+          phone: formData.emergencyContact.phone
+        },
+
+        // Documents
+        documents: formData.documents.map(doc => ({
+          name: doc.name,
+          url: doc.url,
+          type: doc.type,
+          size: doc.size,
+          uploadedAt: new Date().toISOString()
+        })),
+
+        // Metadata
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          createdBy: userEmail,
+          status: 'active'
+        }
+      }
+
+      // Save to Firebase
+      const patientsRef = collection(db, 'patients')
+      const docRef = await addDoc(patientsRef, patientData)
 
       // Generate QR code data
       const qrDataString = JSON.stringify({
         id: docRef.id,
-        ...formData,
-        userEmail,
-        createdAt: new Date().toISOString()
+        ...patientData
       })
       setQrData(qrDataString)
       setShowQRCode(true)
 
       toast.success('Patient information saved successfully!')
+      
       // Reset form
       setFormData({
         fullName: '',
         age: '',
         gender: '',
         bloodType: '',
+        phoneNumber: '',
+        email: '',
+        aadharNumber: '',
+        passportPhoto: '',
+        address: {
+          street: '',
+          city: '',
+          state: '',
+          pincode: ''
+        },
         height: '',
         weight: '',
         bloodPressure: '',
@@ -271,7 +373,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm font-medium text-gray-700">Welcome, {userEmail || 'User'}</span>
-              <UserCircle className="h-8 w-8 text-gray-500" />
+                <UserCircle className="h-8 w-8 text-gray-500" />
               <button
                 onClick={handleSignOut}
                 className="flex items-center text-sm text-gray-600 hover:text-gray-900"
@@ -352,6 +454,57 @@ export default function DashboardPage() {
                     <option value="AB+">AB+</option>
                     <option value="AB-">AB-</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                    placeholder="+91 1234567890"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                    placeholder="patient@example.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Aadhar Card Number</label>
+                  <input
+                    type="text"
+                    name="aadharNumber"
+                    value={formData.aadharNumber}
+                    onChange={handleChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                    placeholder="XXXX XXXX XXXX"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Passport Photo</label>
+                  <input
+                    type="file"
+                    name="passportPhoto"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="mt-1 block w-full text-gray-900"
+                    required
+                  />
                 </div>
 
                 <div>
@@ -591,6 +744,63 @@ export default function DashboardPage() {
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">📍 Address Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Street Address</label>
+                    <input
+                      type="text"
+                      name="address_street"
+                      value={formData.address.street}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                      placeholder="Street address"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City</label>
+                    <input
+                      type="text"
+                      name="address_city"
+                      value={formData.address.city}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                      placeholder="City"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">State</label>
+                    <input
+                      type="text"
+                      name="address_state"
+                      value={formData.address.state}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                      placeholder="State"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">PIN Code</label>
+                    <input
+                      type="text"
+                      name="address_pincode"
+                      value={formData.address.pincode}
+                      onChange={handleChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
+                      placeholder="PIN Code"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">📄 Medical Documents</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-center w-full">
@@ -655,8 +865,8 @@ export default function DashboardPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                  </div>
+                )}
                 </div>
               </div>
 
