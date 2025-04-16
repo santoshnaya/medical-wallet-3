@@ -12,6 +12,7 @@ import {
   Star,
   Calendar
 } from 'lucide-react'
+import { signIn } from 'next-auth/react'
 
 export default function LandingPage() {
   const [activeSection, setActiveSection] = useState('hero');
@@ -48,6 +49,18 @@ export default function LandingPage() {
                 <UserCog className="h-5 w-5" />
                 Login as Admin
               </Link>
+              <button 
+                onClick={() => signIn('google')}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-600 rounded-lg hover:bg-gray-50 transition-all"
+              >
+                <Image 
+                  src="/google.svg" 
+                  alt="Google" 
+                  width={20} 
+                  height={20}
+                />
+                Sign in with Google
+              </button>
               <Link href="/register" className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all">
                 Register
               </Link>
@@ -141,7 +154,7 @@ export default function LandingPage() {
                 href: '/nearby'
               },
               { 
-                icon: Image, 
+                icon: FileText, 
                 title: 'Skin Disease Detection', 
                 description: 'AI-powered analysis for identifying skin conditions.',
                 href: '/skin-disease'

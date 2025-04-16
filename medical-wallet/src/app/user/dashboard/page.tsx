@@ -28,20 +28,20 @@ export default function UserDashboard() {
         if (!userDoc.exists()) {
           toast.error('User data not found');
           router.push('/login');
-          return;
-        }
-        
+        return;
+      }
+
         const userData = userDoc.data();
         setUserName(userData.name);
-      } catch (error) {
+    } catch (error) {
         console.error('Error checking auth:', error);
         toast.error('Authentication error');
         router.push('/login');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
+    } finally {
+      setLoading(false);
+    }
+  };
+
     checkAuth();
   }, [router]);
 
@@ -59,8 +59,8 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    </div>
+  );
   }
 
   return (
