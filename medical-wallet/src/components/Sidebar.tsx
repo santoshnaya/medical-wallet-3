@@ -25,6 +25,7 @@ const Sidebar = () => {
   const toggleSidebar = () => setIsOpen(!isOpen)
 
   const navigation = [
+    { name: 'Home', href: '/', icon: Home },
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Patients', href: '/patients', icon: Users },
     { name: 'Heart Prediction', href: '/heart-prediction', icon: Heart },
@@ -89,14 +90,6 @@ const Sidebar = () => {
               <span className="font-medium">Blood Pressure Prediction</span>
             </button>
           </nav>
-
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="bg-white/10 rounded-lg p-4">
-              <p className="text-white text-sm text-center">
-                Need help? Contact support
-              </p>
-            </div>
-          </div>
         </div>
       </aside>
 

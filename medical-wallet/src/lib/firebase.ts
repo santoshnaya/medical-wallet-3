@@ -5,15 +5,24 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 import { getMessaging as getMessagingType, getToken, onMessage, Messaging } from 'firebase/messaging';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId: string;
+}
+
+const firebaseConfig: FirebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || '',
 };
 
 console.log('Firebase Config Loaded:', {
@@ -24,24 +33,29 @@ console.log('Firebase Config Loaded:', {
 
 // Initialize Firebase App only once
 let app: FirebaseApp;
-if (!getApps().length) {
-  try {
+try {
+  if (!getApps().length) {
+    if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+      throw new Error('Missing required Firebase configuration. Check your environment variables.');
+    }
     app = initializeApp(firebaseConfig);
-    console.log('Firebase App Initialized for the first time.');
-  } catch (error) {
-    console.error('CRITICAL: Firebase App Initialization Failed:', error);
-    // If app initialization fails, we can't proceed
-    throw new Error('Could not initialize Firebase app.'); 
+    console.log('Firebase App Initialized successfully with config:', {
+      authDomain: firebaseConfig.authDomain,
+      projectId: firebaseConfig.projectId
+    });
+  } else {
+    app = getApp();
+    console.log('Using existing Firebase App instance');
   }
-} else {
-  app = getApp();
-  console.log('Firebase App already initialized.');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  throw error;
 }
 
 // Initialize services
-let auth: Auth | undefined;
-let db: Firestore | undefined;
-let storage: FirebaseStorage | undefined;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 let analytics: Analytics | undefined;
 let messaging: Messaging | undefined;
 
@@ -53,10 +67,10 @@ try {
     analytics = getAnalytics(app);
     messaging = getMessagingType(app);
   }
-  console.log('Firebase Services Initialized (Auth, DB, Storage)');
+  console.log('Firebase Services Initialized successfully');
 } catch (error) {
-  console.error('CRITICAL: Firebase Service Initialization Failed:', error);
-  // Decide how to handle service init failure - maybe auth can still work?
+  console.error('Firebase service initialization error:', error);
+  throw error;
 }
 
 // Admin email
@@ -84,23 +98,17 @@ export const registerUser = async (
   console.log('Attempting registration for:', email, 'with role:', role);
   try {
     if (!auth) {
-      console.error('Registration Error: Firebase Auth service is not available.');
-      throw new Error('Firebase Auth service is not available. Initialization might have failed.');
+      throw new Error('Firebase Auth service is not initialized. Check your Firebase configuration.');
     }
-    console.log('Auth service check passed.');
 
     // Check if email is admin email
     if (email === ADMIN_EMAIL) {
-      console.warn('Registration blocked: Admin email used.');
       return { success: false, message: 'This email is reserved for admin use.' };
     }
-    console.log('Admin email check passed.');
 
     // Create user with Firebase Auth
-    console.log('Calling createUserWithEmailAndPassword...');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    console.log('Firebase Auth user created successfully:', user.uid);
 
     // Store user data in Firestore
     const userData: User = {
@@ -112,31 +120,20 @@ export const registerUser = async (
     };
 
     if (!db) {
-      console.error('Registration Error: Firestore service is not available.');
-      // Decide if registration should fail if DB isn't available
-      // For now, let's log and potentially continue if needed, but better to fail
-      throw new Error('Firestore service is not available. Cannot save user data.');
+      throw new Error('Firestore service is not initialized. Check your Firebase configuration.');
     }
-    console.log('Firestore service check passed.');
 
-    console.log('Attempting to set Firestore document for user:', user.uid);
     await setDoc(doc(db, 'users', user.uid), userData);
-    console.log('Firestore document set successfully.');
-
-    // Sign out after registration
-    console.log('Signing out user after registration...');
     await signOut(auth);
-    console.log('User signed out successfully.');
 
     return { success: true, message: 'Registration successful!' };
   } catch (error) {
-    console.error('Registration failed catastrophically:', error);
+    console.error('Registration error:', error);
     
     const authError = error as AuthError;
     let message = 'Registration failed. Please try again.';
 
-    if (authError?.code) { // Check if authError and code exist
-      console.error('Firebase Auth Error Code:', authError.code);
+    if (authError?.code) {
       switch (authError.code) {
         case 'auth/email-already-in-use':
           message = 'Email already in use. Please use a different email or login.';
@@ -147,20 +144,15 @@ export const registerUser = async (
         case 'auth/invalid-email':
           message = 'Invalid email format.';
           break;
-        case 'auth/operation-not-allowed': // Added this one
-          message = 'Email/password sign-up is not enabled in your Firebase project.';
+        case 'auth/operation-not-allowed':
+          message = 'Email/password sign-up is not enabled. Please contact support.';
           break;
-        case 'auth/configuration-not-found': // Explicitly handle this
-           message = 'Firebase configuration error. Please check environment variables or contact support.'; // Updated message
-           break;
+        case 'auth/configuration-not-found':
+          message = 'Firebase configuration error. Please check your environment variables and Firebase Console settings.';
+          break;
         default:
-          message = `Registration failed: ${authError.message || 'Unknown Auth Error'}`;
+          message = `Registration failed: ${authError.message || 'Unknown error'}`;
       }
-    } else if (error instanceof Error) { // Handle generic errors
-      console.error('Non-Auth Error during registration:', error.message);
-      message = `Registration failed: ${error.message || 'Unknown Error'}`;
-    } else {
-      console.error('Unknown error object during registration:', error);
     }
     
     return { success: false, message };

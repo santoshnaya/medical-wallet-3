@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Clock, Lock, QrCode, Shield, Share2, FileText, CheckCircle2, ArrowRight, Users, User, Stethoscope, UserCog, MapPin, Lungs, Blood, Activity } from 'lucide-react'
+import { Heart, Clock, Lock, QrCode, Shield, Share2, FileText, CheckCircle2, ArrowRight, Users, User, Stethoscope, UserCog, MapPin, Lungs, Blood, Activity, LayoutDashboard, FileSearch, ScanText, ShieldAlert } from 'lucide-react'
 import Image from 'next/image'
 import { 
   Brain,
@@ -95,36 +95,102 @@ export default function LandingPage() {
       {/* Values Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-center text-black mb-12"
-          >
-            Our Values
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-black mb-4">Our Products</h2>
+            <p className="text-black max-w-2xl mx-auto">
+              Discover our comprehensive suite of healthcare management tools designed to improve your medical experience.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { icon: Heart, title: 'Compassion', desc: 'Caring for every patient' },
-              { icon: Users, title: 'Excellence', desc: 'Striving for the best' },
-              { icon: Brain, title: 'Integrity', desc: 'Honest and ethical care' },
-              { icon: Clock, title: 'Respect', desc: 'Valuing every person' },
-              { icon: UserPlus, title: 'Teamwork', desc: 'Working together' }
-            ].map((value, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+              { 
+                icon: LayoutDashboard, 
+                title: 'Medical Dashboard', 
+                description: 'Centralized hub for all your medical information and health metrics.',
+                href: '/dashboard'
+              },
+              { 
+                icon: Users, 
+                title: 'Patient Management', 
+                description: 'Efficiently manage patient records and medical histories.',
+                href: '/patients'
+              },
+              { 
+                icon: Heart, 
+                title: 'Heart Health Prediction', 
+                description: 'AI-powered analysis to predict heart health conditions.',
+                href: '/heart-prediction'
+              },
+              { 
+                icon: Activity, 
+                title: 'Lung Health Analysis', 
+                description: 'Advanced diagnostics for respiratory health assessment.',
+                href: '/lung-prediction'
+              },
+              { 
+                icon: Activity, 
+                title: 'Anemia Detection', 
+                description: 'Early detection and monitoring of anemia symptoms.',
+                href: '/anemia-prediction'
+              },
+              { 
+                icon: MapPin, 
+                title: 'Nearby Healthcare', 
+                description: 'Find hospitals, clinics, and pharmacies in your vicinity.',
+                href: '/nearby'
+              },
+              { 
+                icon: Image, 
+                title: 'Skin Disease Detection', 
+                description: 'AI-powered analysis for identifying skin conditions.',
+                href: '/skin-disease'
+              },
+              { 
+                icon: FileSearch, 
+                title: 'PDF Medical Reader', 
+                description: 'Extract and organize information from medical documents.',
+                href: '/pdf-reader'
+              },
+              { 
+                icon: ScanText, 
+                title: 'OCR Medical Scanner', 
+                description: 'Convert medical images and documents into searchable text.',
+                href: '/ocr-reader'
+              },
+              { 
+                icon: ShieldAlert, 
+                title: 'Crash Detection', 
+                description: 'Emergency alert system for accidents and medical emergencies.',
+                href: '/crash-detection'
+              },
+              { 
+                icon: Heart, 
+                title: 'Blood Pressure Prediction', 
+                description: 'Predict and monitor blood pressure trends over time.',
+                href: '/blood-pressure-prediction'
+              }
+            ].map((product, index) => (
+              <Link 
+                href={product.href}
+                key={product.title}
               >
-                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <value.icon className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="font-semibold mb-2 text-black">{value.title}</h3>
-                <p className="text-black text-sm">{value.desc}</p>
-              </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="bg-gray-50 rounded-lg shadow-sm p-6 hover:shadow-md transition-all cursor-pointer h-full"
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <product.icon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">{product.title}</h3>
+                  </div>
+                  <p className="text-gray-600">{product.description}</p>
+                </motion.div>
+              </Link>
             ))}
           </div>
         </div>

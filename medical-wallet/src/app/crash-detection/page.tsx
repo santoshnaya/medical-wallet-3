@@ -12,6 +12,19 @@ import {
   AlertCircle 
 } from 'lucide-react'
 
+interface CrashData {
+  latitude: number;
+  longitude: number;
+  timestamp: number;
+  severity: 'low' | 'medium' | 'high';
+}
+
+interface SMSResponse {
+  success: boolean;
+  message: string;
+  verificationStatus?: 'pending' | 'approved';
+}
+
 const CrashDetectionPage = () => {
   const { 
     notificationStatus, 
@@ -106,7 +119,7 @@ const CrashDetectionPage = () => {
     try {
       getCurrentLocation()
       
-      const response = await fetch('/api/send-sms', {
+      const response: SMSResponse = await fetch('/api/send-sms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -53,6 +53,15 @@ function calculateSimilarity(input: any, datasetEntry: any): number {
   return score;
 }
 
+interface PredictionResponse {
+  prediction: number;
+  probability: number;
+}
+
+interface PredictionError {
+  error: string;
+}
+
 export async function POST(request: Request) {
   try {
     const data = await request.json();

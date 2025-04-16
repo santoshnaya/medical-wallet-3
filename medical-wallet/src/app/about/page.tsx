@@ -12,7 +12,7 @@ const values = [
   {
     icon: Heart,
     title: 'Patient-Centric',
-    description: 'Our platform is designed with patients\' needs and convenience in mind.',
+    description: 'Our platform is designed with patients&apos; needs and convenience in mind.',
   },
   {
     icon: Target,
@@ -82,10 +82,10 @@ export default function AboutPage() {
               Our team consists of healthcare professionals, security experts, and technology innovators
               who are passionate about improving healthcare through technology. We combine decades of
               experience in healthcare, security, and software development to create a platform that
-              truly serves patients' needs.
+              truly serves patients&apos; needs.
             </p>
             <p className="text-gray-600">
-              We're constantly working to improve our platform and add new features based on user
+              We&apos;re constantly working to improve our platform and add new features based on user
               feedback and the evolving needs of the healthcare industry. Our goal is to make Medical
               Wallet the most trusted and comprehensive medical records management solution available.
             </p>

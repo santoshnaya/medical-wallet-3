@@ -22,15 +22,13 @@ interface CrashNotification {
 }
 
 interface MessagePayload {
+  notification: {
+    title: string;
+    body: string;
+  };
   data?: {
-    type?: string
-    severity?: CrashSeverity
-    [key: string]: string | undefined
-  }
-  notification?: {
-    title?: string
-    body?: string
-  }
+    [key: string]: string;
+  };
 }
 
 interface CrashNotificationContextType {
