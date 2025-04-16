@@ -9,6 +9,8 @@ import { collection, addDoc } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
+import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
 
 interface Document {
   name: string
@@ -205,6 +207,98 @@ export default function DashboardPage() {
     }))
   }
 
+  const generatePDF = async (patientData: any) => {
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const margin = 20
+    const maxWidth = pageWidth - (2 * margin)
+    
+    // Helper function to handle text wrapping
+    const addWrappedText = (text: string, y: number, fontSize: number = 12) => {
+      doc.setFontSize(fontSize)
+      const lines = doc.splitTextToSize(text, maxWidth)
+      lines.forEach((line: string) => {
+        doc.text(line, margin, y)
+        y += 7
+      })
+      return y
+    }
+    
+    // Add title
+    let y = 20
+    doc.setFontSize(20)
+    doc.text('Patient Medical Record', margin, y)
+    y += 20
+    
+    // Add personal information
+    doc.setFontSize(16)
+    doc.text('Personal Information', margin, y)
+    y += 10
+    doc.setFontSize(12)
+    y = addWrappedText(`Name: ${patientData.personalInfo.fullName}`, y)
+    y = addWrappedText(`Age: ${patientData.personalInfo.age}`, y)
+    y = addWrappedText(`Gender: ${patientData.personalInfo.gender}`, y)
+    y = addWrappedText(`Blood Type: ${patientData.personalInfo.bloodType}`, y)
+    y = addWrappedText(`Phone: ${patientData.personalInfo.phoneNumber}`, y)
+    y = addWrappedText(`Email: ${patientData.personalInfo.email}`, y)
+    y = addWrappedText(`Aadhar: ${patientData.personalInfo.aadharNumber}`, y)
+    y += 10
+    
+    // Add address
+    y = addWrappedText('Address:', y)
+    y = addWrappedText(patientData.personalInfo.address.street, y)
+    y = addWrappedText(`${patientData.personalInfo.address.city}, ${patientData.personalInfo.address.state}`, y)
+    y = addWrappedText(`PIN: ${patientData.personalInfo.address.pincode}`, y)
+    y += 10
+    
+    // Add vitals
+    doc.setFontSize(16)
+    y = addWrappedText('Vitals & Measurements', y)
+    y += 10
+    doc.setFontSize(12)
+    y = addWrappedText(`Height: ${patientData.vitals.height} cm`, y)
+    y = addWrappedText(`Weight: ${patientData.vitals.weight} kg`, y)
+    y = addWrappedText(`Blood Pressure: ${patientData.vitals.bloodPressure}`, y)
+    y = addWrappedText(`Heart Rate: ${patientData.vitals.heartRate} bpm`, y)
+    y += 10
+    
+    // Add medical history
+    doc.setFontSize(16)
+    y = addWrappedText('Medical History', y)
+    y += 10
+    doc.setFontSize(12)
+    y = addWrappedText(`Existing Conditions: ${patientData.medicalHistory.existingConditions}`, y)
+    y = addWrappedText(`Past Surgeries: ${patientData.medicalHistory.pastSurgeries}`, y)
+    y = addWrappedText(`Family History: ${patientData.medicalHistory.familyMedicalHistory}`, y)
+    y = addWrappedText(`Allergies: ${patientData.medicalHistory.allergies}`, y)
+    y = addWrappedText(`Medications: ${patientData.medicalHistory.medications}`, y)
+    y += 10
+    
+    // Add visit information
+    doc.setFontSize(16)
+    y = addWrappedText('Visit Information', y)
+    y += 10
+    doc.setFontSize(12)
+    y = addWrappedText(`Date: ${patientData.visitInfo.date}`, y)
+    y = addWrappedText(`Doctor: ${patientData.visitInfo.doctor}`, y)
+    y = addWrappedText(`Reason: ${patientData.visitInfo.reason}`, y)
+    y = addWrappedText(`Diagnosis: ${patientData.visitInfo.diagnosis}`, y)
+    y = addWrappedText(`Treatment: ${patientData.visitInfo.prescribedTreatment}`, y)
+    y += 10
+    
+    // Add emergency contact
+    doc.setFontSize(16)
+    y = addWrappedText('Emergency Contact', y)
+    y += 10
+    doc.setFontSize(12)
+    y = addWrappedText(`Name: ${patientData.emergencyContact.name}`, y)
+    y = addWrappedText(`Relationship: ${patientData.emergencyContact.relationship}`, y)
+    y = addWrappedText(`Phone: ${patientData.emergencyContact.phone}`, y)
+    
+    // Save the PDF
+    doc.save(`patient-record-${patientData.personalInfo.fullName}.pdf`)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -289,7 +383,10 @@ export default function DashboardPage() {
       setQrData(qrDataString)
       setShowQRCode(true)
 
-      toast.success('Patient information saved successfully!')
+      // Generate and download PDF
+      await generatePDF(patientData)
+
+      toast.success('Patient information saved successfully! PDF and QR code generated.')
       
       // Reset form
       setFormData({
@@ -882,7 +979,7 @@ export default function DashboardPage() {
                       Saving...
                     </>
                   ) : (
-                    'Save Information'
+                    'Save and Download PDF'
                   )}
                 </button>
               </div>
@@ -901,13 +998,22 @@ export default function DashboardPage() {
                       className="mb-4"
                     />
                   </div>
-                  <button
-                    onClick={downloadQRCode}
-                    className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Download className="h-5 w-5" />
-                    Download QR Code
-                  </button>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={downloadQRCode}
+                      className="mt-4 flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Download className="h-5 w-5" />
+                      Download QR Code
+                    </button>
+                    <button
+                      onClick={() => window.open(`data:image/svg+xml;base64,${btoa(document.getElementById('qr-code')?.outerHTML || '')}`, '_blank')}
+                      className="mt-4 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Download className="h-5 w-5" />
+                      View QR Code
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
