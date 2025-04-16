@@ -2,12 +2,20 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { LogOut, UserCircle, Loader2, Download } from 'lucide-react'
+import { LogOut, UserCircle, Loader2, Download, Upload, X } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { db } from '@/lib/firebase'
+import { db, storage } from '@/lib/firebase'
 import { collection, addDoc } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
+
+interface Document {
+  name: string
+  url: string
+  type: string
+  size: number
+}
 
 interface PatientForm {
   fullName: string
@@ -24,6 +32,7 @@ interface PatientForm {
   existingConditions: string
   pastSurgeries: string
   familyMedicalHistory: string
+  documents: Document[]
   visitInfo: {
     date: string
     doctor: string
@@ -42,6 +51,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
   const [qrData, setQrData] = useState<string>('')
   const [formData, setFormData] = useState<PatientForm>({
@@ -59,6 +69,7 @@ export default function DashboardPage() {
     existingConditions: '',
     pastSurgeries: '',
     familyMedicalHistory: '',
+    documents: [],
     visitInfo: {
       date: '',
       doctor: '',
@@ -119,6 +130,52 @@ export default function DashboardPage() {
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setIsUploading(true)
+    const uploadPromises = Array.from(files).map(async (file) => {
+      try {
+        const storageRef = ref(storage, `patient-documents/${userEmail}/${file.name}`)
+        await uploadBytes(storageRef, file)
+        const url = await getDownloadURL(storageRef)
+        
+        return {
+          name: file.name,
+          url,
+          type: file.type,
+          size: file.size
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error)
+        toast.error(`Failed to upload ${file.name}`)
+        return null
+      }
+    })
+
+    try {
+      const uploadedDocs = (await Promise.all(uploadPromises)).filter(Boolean) as Document[]
+      setFormData(prev => ({
+        ...prev,
+        documents: [...prev.documents, ...uploadedDocs]
+      }))
+      toast.success('Documents uploaded successfully!')
+    } catch (error) {
+      console.error('Error uploading documents:', error)
+      toast.error('Failed to upload some documents')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const removeDocument = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -158,6 +215,7 @@ export default function DashboardPage() {
         existingConditions: '',
         pastSurgeries: '',
         familyMedicalHistory: '',
+        documents: [],
         visitInfo: {
           date: '',
           doctor: '',
@@ -240,7 +298,7 @@ export default function DashboardPage() {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     placeholder="John Doe"
                     required
                   />
@@ -253,7 +311,7 @@ export default function DashboardPage() {
                     name="age"
                     value={formData.age}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     placeholder="25"
                     required
                   />
@@ -265,7 +323,7 @@ export default function DashboardPage() {
                     name="gender"
                     value={formData.gender}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     required
                   >
                     <option value="">Select Gender</option>
@@ -281,7 +339,7 @@ export default function DashboardPage() {
                     name="bloodType"
                     value={formData.bloodType}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     required
                   >
                     <option value="">Select Blood Type</option>
@@ -303,7 +361,7 @@ export default function DashboardPage() {
                     name="height"
                     value={formData.height}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     placeholder="170"
                     required
                   />
@@ -316,7 +374,7 @@ export default function DashboardPage() {
                     name="weight"
                     value={formData.weight}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                     placeholder="70"
                     required
                   />
@@ -333,7 +391,7 @@ export default function DashboardPage() {
                       name="bloodPressure"
                       value={formData.bloodPressure}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="120/80"
                       required
                     />
@@ -346,7 +404,7 @@ export default function DashboardPage() {
                       name="heartRate"
                       value={formData.heartRate}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="72"
                       required
                     />
@@ -363,7 +421,7 @@ export default function DashboardPage() {
                       name="existingConditions"
                       value={formData.existingConditions}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="e.g., Diabetes, Hypertension..."
                     />
@@ -375,7 +433,7 @@ export default function DashboardPage() {
                       name="pastSurgeries"
                       value={formData.pastSurgeries}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="List any past surgeries..."
                     />
@@ -387,7 +445,7 @@ export default function DashboardPage() {
                       name="medications"
                       value={formData.medications}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="List current medications..."
                     />
@@ -399,7 +457,7 @@ export default function DashboardPage() {
                       name="familyMedicalHistory"
                       value={formData.familyMedicalHistory}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="Describe family medical history..."
                     />
@@ -411,7 +469,7 @@ export default function DashboardPage() {
                       name="allergies"
                       value={formData.allergies}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="List any allergies..."
                     />
@@ -429,7 +487,7 @@ export default function DashboardPage() {
                       name="visit_date"
                       value={formData.visitInfo.date}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       required
                     />
                   </div>
@@ -441,7 +499,7 @@ export default function DashboardPage() {
                       name="visit_doctor"
                       value={formData.visitInfo.doctor}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="Dr. Smith"
                       required
                     />
@@ -453,7 +511,7 @@ export default function DashboardPage() {
                       name="visit_reason"
                       value={formData.visitInfo.reason}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="Describe symptoms or reason for visit..."
                       required
@@ -466,7 +524,7 @@ export default function DashboardPage() {
                       name="visit_diagnosis"
                       value={formData.visitInfo.diagnosis}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="Doctor's diagnosis..."
                       required
@@ -479,7 +537,7 @@ export default function DashboardPage() {
                       name="visit_prescribedTreatment"
                       value={formData.visitInfo.prescribedTreatment}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       rows={3}
                       placeholder="List prescribed treatments and medications..."
                       required
@@ -498,7 +556,7 @@ export default function DashboardPage() {
                       name="emergency_name"
                       value={formData.emergencyContact.name}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="Emergency contact name"
                       required
                     />
@@ -511,7 +569,7 @@ export default function DashboardPage() {
                       name="emergency_relationship"
                       value={formData.emergencyContact.relationship}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="e.g., Parent, Spouse"
                       required
                     />
@@ -524,11 +582,81 @@ export default function DashboardPage() {
                       name="emergency_phone"
                       value={formData.emergencyContact.phone}
                       onChange={handleChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-gray-900"
                       placeholder="Emergency contact phone number"
                       required
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">📄 Medical Documents</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">PDF, DOC, DOCX, JPG, PNG (MAX. 10MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
+
+                  {isUploading && (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                      <span className="ml-2 text-sm text-gray-500">Uploading documents...</span>
+                    </div>
+                  )}
+
+                  {formData.documents.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Documents</h4>
+                      <div className="space-y-2">
+                        {formData.documents.map((doc, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-white border rounded-lg"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-600">{doc.name}</span>
+                              <span className="text-xs text-gray-500">
+                                ({(doc.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <a
+                                href={doc.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                View
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => removeDocument(index)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
