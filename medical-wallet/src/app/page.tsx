@@ -20,19 +20,30 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
         <div className="container mx-auto px-6 py-16 relative">
           <nav className="flex justify-between items-center mb-16">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2"
-            >
-              <Heart className="h-8 w-8 text-white" />
-              <span className="text-xl font-bold text-white">MedicalWallet</span>
-            </motion.div>
+          <motion.div 
+           initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-4"
+>
+  <Heart className="h-12 w-12 text-white" /> {/* Icon made larger */}
+  <span className="text-3xl font-extrabold text-white">MedicalWallet</span> {/* Text made larger */}
+</motion.div>
+ 
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
+              
+              <div className="flex flex-col items-center">
+              <Link href="/emergency" className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all">
+                  <User className="h-5 w-5" />
+                  Emergency
+                </Link>
+                <div className="text-xs text-white/80 mt-1">
+                  Demo: user@demo.com / user123
+                </div>
+              </div>
               <div className="flex flex-col items-center">
                 <Link href="/login?role=user" className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all">
                   <User className="h-5 w-5" />
@@ -82,7 +93,7 @@ export default function LandingPage() {
               className="relative h-[400px]"
             >
               <Image
-                src="/doctor.webp"
+                src="/image/hero.avif"
                 alt="Medical professionals"
                 fill
                 className="object-cover rounded-lg shadow-2xl"
@@ -207,7 +218,7 @@ export default function LandingPage() {
               className="relative h-[400px]"
             >
               <Image
-                src="/about-team.jpg"
+                src="/image/medical.webp"
                 alt="Medical team"
                 fill
                 className="object-cover rounded-lg shadow-xl"
@@ -264,6 +275,43 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+{/* Services Section */}
+<section className="py-16 bg-white">
+  <div className="container mx-auto px-6">
+    <motion.h2
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="text-3xl font-bold text-center text-black mb-12"
+    >
+      Our Services
+    </motion.h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {[
+        { icon: '🩺', title: 'Online Consultation', desc: 'Connect with doctors anytime, anywhere.' },
+        { icon: '💊', title: 'Medicine Delivery', desc: 'Fast and reliable delivery at your doorstep.' },
+        { icon: '📈', title: 'Health Analytics', desc: 'Track your health data & progress securely.' },
+        { icon: '📝', title: 'Digital Records', desc: 'Store and access your reports seamlessly.' },
+        { icon: '👩‍⚕️', title: 'Expert Panel', desc: 'Top certified specialists across domains.' },
+        { icon: '📆', title: 'Appointment Booking', desc: 'Hassle-free slot booking and reminders.' }
+      ].map((service, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: idx * 0.1 }}
+          className="bg-blue-50 p-6 rounded-xl shadow hover:shadow-lg transition"
+        >
+          <div className="text-4xl mb-4">{service.icon}</div>
+          <h3 className="text-xl font-semibold mb-2 text-blue-700">{service.title}</h3>
+          <p className="text-gray-600">{service.desc}</p>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* Departments Section */}
       <section className="py-16 bg-white">
@@ -418,7 +466,7 @@ export default function LandingPage() {
               className="relative h-[300px]"
             >
               <Image
-                src="/appointment.jpg"
+                src="/image/appointment.png"
                 alt="Book appointment"
                 fill
                 className="object-cover rounded-lg shadow-xl"
