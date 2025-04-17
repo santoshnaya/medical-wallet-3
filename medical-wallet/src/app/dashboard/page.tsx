@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { LogOut, UserCircle, Loader2, Download, Upload, X } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { db, storage } from '@/lib/firebase'
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import QRCode from 'react-qr-code'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
+import Logo from '@/components/Logo'
 
 interface Document {
   name: string
@@ -325,25 +326,48 @@ export default function DashboardPage() {
   }
 
   const downloadHealthCard = async () => {
-    const card = document.getElementById('health-card')
-    if (!card) return
+    const cardElement = document.getElementById('health-card');
+    if (!cardElement) {
+      toast.error('Could not find the health card element');
+      return;
+    }
 
     try {
-      const canvas = await html2canvas(card, {
+      toast.loading('Generating health card...', { id: 'download' });
+
+      // Wait for QR code to be fully rendered
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const canvas = await html2canvas(cardElement, {
         scale: 2,
-        backgroundColor: 'white'
-      })
-      
-      const link = document.createElement('a')
-      link.download = `health-card-${formData.fullName}.png`
-      link.href = canvas.toDataURL('image/png')
-      link.click()
-      toast.success('Health Card downloaded successfully!')
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById('health-card');
+          if (clonedElement) {
+            clonedElement.style.transform = 'none';
+          }
+        }
+      });
+
+      // Create a download link
+      const image = canvas.toDataURL('image/png', 1.0);
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `health-card-${formData.fullName || 'patient'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.dismiss('download');
+      toast.success('Health Card downloaded successfully!');
     } catch (error) {
-      console.error('Error downloading health card:', error)
-      toast.error('Failed to download health card')
+      console.error('Error downloading health card:', error);
+      toast.dismiss('download');
+      toast.error('Failed to download health card. Please try again.');
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -352,7 +376,6 @@ export default function DashboardPage() {
     try {
       // Structure the patient data
       const patientData = {
-        // Personal Information
         personalInfo: {
           fullName: formData.fullName,
           age: formData.age,
@@ -428,6 +451,7 @@ export default function DashboardPage() {
       })
       setQrData(qrDataString)
       setShowQRCode(true)
+      setShowHealthCard(true)
 
       // Generate and download PDF
       await generatePDF(patientData)
@@ -474,8 +498,6 @@ export default function DashboardPage() {
           phone: ''
         }
       })
-
-      setShowHealthCard(true)
     } catch (error) {
       console.error('Error saving patient data:', error)
       toast.error('Failed to save patient information. Please try again.')
@@ -489,9 +511,7 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <span className="text-xl font-semibold text-gray-900">User Dashboard</span>
-            </div>
+            <Logo />
             <div className="flex items-center space-x-4">
               <span className="text-sm font-medium text-gray-700">Welcome, {userEmail || 'User'}</span>
                 <UserCircle className="h-8 w-8 text-gray-500" />
@@ -1040,50 +1060,62 @@ export default function DashboardPage() {
                   
                   {/* Health Card Design */}
                   <div className="flex justify-center">
-                    <div id="health-card" className="bg-white border-2 border-blue-500 rounded-lg p-6 mb-4" style={{ width: '600px', minHeight: '200px' }}>
+                    <div 
+                      id="health-card" 
+                      className="bg-white border-2 border-blue-500 rounded-lg p-6 mb-4" 
+                      style={{ 
+                        width: '600px', 
+                        minHeight: '220px',
+                        transform: 'scale(1)', // Ensure proper rendering
+                        transformOrigin: 'top left'
+                      }}
+                    >
                       <div className="flex items-start space-x-4">
                         {/* Left: Profile Photo */}
-                        <div className="w-28 h-28 flex-shrink-0">
+                        <div className="w-32 h-32 flex-shrink-0">
                           {formData.passportPhoto ? (
                             <img
-                              src={formData.passportPhoto}
+                              src={URL.createObjectURL(formData.passportPhoto)}
                               alt="Profile"
                               className="w-full h-full object-cover rounded-lg"
+                              crossOrigin="anonymous"
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                              <UserCircle className="w-14 h-14 text-gray-400" />
+                              <UserCircle className="w-16 h-16 text-gray-400" />
                             </div>
                           )}
                         </div>
 
                         {/* Middle: Patient Information */}
                         <div className="flex-grow py-2">
-                          <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.fullName}</h2>
+                          <h2 className="text-xl font-bold text-gray-900 mb-4">
+                            {formData.fullName || 'Name not provided'}
+                          </h2>
                           <div className="space-y-2 text-sm">
                             <p className="text-gray-600">
-                              <span className="font-semibold">Name:</span> {formData.fullName}
+                              <span className="font-semibold">Name:</span> {formData.fullName || 'Not provided'}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Age:</span> {formData.age} years
+                              <span className="font-semibold">Age:</span> {formData.age ? `${formData.age} years` : 'Not provided'}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Phone:</span> {formData.phoneNumber}
+                              <span className="font-semibold">Phone:</span> {formData.phoneNumber || 'Not provided'}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Email:</span> {formData.email}
+                              <span className="font-semibold">Email:</span> {formData.email || 'Not provided'}
                             </p>
                             <p className="text-gray-600">
-                              <span className="font-semibold">Aadhar:</span> {formData.aadharNumber}
+                              <span className="font-semibold">Aadhar:</span> {formData.aadharNumber || 'Not provided'}
                             </p>
                           </div>
-                        </div>
+          </div>
 
                         {/* Right: QR Code */}
-                        <div className="w-28 h-28 flex-shrink-0">
+                        <div className="w-32 h-32 flex-shrink-0 bg-white">
                           <QRCode
-                            value={qrData}
-                            size={112}
+                            value={qrData || JSON.stringify(formData)}
+                            size={128}
                             level="H"
                             className="w-full h-full"
                           />
